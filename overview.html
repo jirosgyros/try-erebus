@@ -1,0 +1,599 @@
+<title>Erebus: Would you catch it?</title>
+<style>
+  :root {
+    /* ground: green-biased, chosen not defaulted */
+    --bg:        #080d0b;
+    --bg-2:      #0b1210;
+    --surface:   #0e1613;
+    --surface-2: #131e1a;
+    --line:      #1b2925;
+    --line-2:    #26382f;
+
+    /* ink */
+    --text:      #e7efe9;
+    --text-dim:  #9fb2aa;
+    --text-faint:#6c807760;
+
+    /* semantic signal system */
+    --signal:    #33d6a0;   /* detected / covered */
+    --signal-hi: #63e8bd;
+    --signal-lo: #0e9e73;
+    --signal-glow: rgba(51,214,160,.16);
+    --gap:       #de6b5a;   /* blind spot / miss */
+    --gap-dim:   #7a3b34;
+
+    --maxw: 1080px;
+    --sans: -apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    --mono: ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code","Roboto Mono",Consolas,monospace;
+
+    --s1:.5rem; --s2:1rem; --s3:1.5rem; --s4:2.5rem; --s5:4rem; --s6:6.5rem;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 620px at 78% -8%, rgba(51,214,160,.09), transparent 60%),
+      radial-gradient(900px 520px at 6% 4%, rgba(51,214,160,.05), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--signal-glow); color: var(--signal-hi); }
+
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 1.5rem; }
+
+  /* &#9472;&#9472; typographic system &#9472;&#9472; */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin: 0 0 1rem;
+    display: inline-flex; align-items: center; gap: .6rem;
+  }
+  .eyebrow::before {
+    content: ""; width: 1.7rem; height: 1px;
+    background: linear-gradient(90deg, var(--signal), transparent);
+  }
+  h1,h2,h3 { text-wrap: balance; margin: 0; font-weight: 620; letter-spacing: -.02em; }
+  h1 { font-size: clamp(2.6rem, 6vw, 4.4rem); line-height: 1.02; }
+  h2 { font-size: clamp(1.8rem, 3.4vw, 2.5rem); line-height: 1.08; }
+  h3 { font-size: 1.12rem; letter-spacing: -.01em; font-weight: 600; }
+  p  { margin: 0; color: var(--text-dim); }
+  .lead { font-size: clamp(1.05rem, 1.8vw, 1.24rem); color: var(--text-dim); max-width: 40ch; }
+  .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  strong { color: var(--text); font-weight: 600; }
+
+  section { padding: var(--s6) 0; border-top: 1px solid var(--line); }
+  .kicker {
+    font-family: var(--mono); font-size: .72rem; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 1.1rem;
+    display: flex; align-items: center; gap: .7rem;
+  }
+  .kicker .idx { color: var(--signal); }
+
+  /* &#9472;&#9472; hero &#9472;&#9472; */
+  .hero { border-top: none; padding-top: clamp(3.5rem, 8vw, 6rem); padding-bottom: var(--s6); }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(2rem,5vw,4rem); align-items: center; }
+  .hero h1 span.q { color: var(--signal); }
+  .hero .lead { margin-top: 1.6rem; max-width: 46ch; }
+  .brandline {
+    display: flex; align-items: center; gap: .8rem; margin-bottom: 2.2rem;
+  }
+  .brandmark {
+    width: 34px; height: 34px; flex: none; border-radius: 7px;
+    box-shadow: 0 0 0 1px var(--line-2), 0 0 20px -6px var(--signal-glow);
+  }
+  .brandname {
+    font-family: var(--mono); font-weight: 600; letter-spacing: .32em;
+    text-transform: uppercase; font-size: .82rem; color: var(--text);
+  }
+  .brandname b { color: var(--signal); font-weight: 600; }
+
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 1.5rem 2rem; align-items: center; margin-top: 2.4rem; }
+  .stat-inline { display: flex; align-items: baseline; gap: .55rem; }
+  .stat-inline .n { font-family: var(--mono); font-size: 1.5rem; color: var(--text); font-variant-numeric: tabular-nums; }
+  .stat-inline .l { font-size: .82rem; color: var(--text-dim); }
+  .divider-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--line-2); }
+
+  /* &#9472;&#9472; coverage matrix &#9472;&#9472; */
+  .matrix-card {
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--line-2);
+    border-radius: 14px;
+    padding: 1.35rem 1.35rem 1.15rem;
+    box-shadow: 0 30px 70px -40px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.03);
+  }
+  .matrix-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .matrix-head .t { font-family: var(--mono); font-size: .7rem; letter-spacing: .16em; text-transform: uppercase; color: var(--text-dim); }
+  .matrix-head .rate { font-family: var(--mono); font-size: .82rem; color: var(--signal); font-variant-numeric: tabular-nums; }
+  .matrix {
+    display: grid;
+    grid-template-columns: repeat(14, 1fr);
+    gap: 5px;
+  }
+  .cell {
+    aspect-ratio: 1 / 1; border-radius: 3px;
+    background: #16211d;
+    border: 1px solid #1d2c27;
+    opacity: 0; transform: scale(.6);
+    transition: opacity .4s ease, transform .4s cubic-bezier(.2,.8,.2,1), background .4s ease, box-shadow .4s ease;
+  }
+  .cell.on { background: var(--signal); border-color: var(--signal-hi); box-shadow: 0 0 10px -1px var(--signal-glow); }
+  .cell.mid { background: var(--signal-lo); border-color: var(--signal-lo); }
+  .cell.gap { background: transparent; border-color: var(--gap-dim); box-shadow: inset 0 0 0 1px var(--gap-dim); }
+  .cell.gap.flag { background: rgba(222,107,90,.16); border-color: var(--gap); }
+  .cell.show { opacity: 1; transform: scale(1); }
+  .matrix-legend { display: flex; gap: 1.2rem; margin-top: 1rem; flex-wrap: wrap; }
+  .lg { display: flex; align-items: center; gap: .45rem; font-family: var(--mono); font-size: .68rem; letter-spacing: .04em; color: var(--text-dim); }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; }
+  .sw-on { background: var(--signal); }
+  .sw-gap { background: rgba(222,107,90,.2); box-shadow: inset 0 0 0 1px var(--gap); }
+  .matrix-note { font-family: var(--mono); font-size: .64rem; color: var(--text-faint); margin-top: .85rem; letter-spacing: .02em; }
+
+  /* &#9472;&#9472; pain &#9472;&#9472; */
+  .pain-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 3rem; }
+  .pain-cell { background: var(--bg-2); padding: 2rem 1.9rem; }
+  .pain-cell h3 { margin-bottom: .7rem; }
+  .pain-cell h3 .mk { color: var(--gap); font-family: var(--mono); font-size: .9rem; margin-right: .5rem; }
+  .pain-cell p { font-size: .98rem; }
+
+  .section-head { max-width: 54ch; }
+  .section-head h2 { margin-bottom: 1.1rem; }
+  .section-head p { font-size: 1.06rem; }
+
+  /* &#9472;&#9472; solution steps &#9472;&#9472; */
+  .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.25rem; margin-top: 3rem; counter-reset: step; }
+  .step {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 1.7rem 1.5rem; position: relative; overflow: hidden;
+  }
+  .step::before {
+    counter-increment: step; content: "0" counter(step);
+    font-family: var(--mono); font-size: .74rem; color: var(--signal);
+    letter-spacing: .1em;
+  }
+  .step h3 { margin: .9rem 0 .55rem; }
+  .step p { font-size: .95rem; }
+  .safe-strip {
+    margin-top: 1.5rem; display: flex; align-items: center; gap: .8rem;
+    font-family: var(--mono); font-size: .8rem; color: var(--text-dim);
+    background: var(--surface); border: 1px solid var(--line);
+    border-left: 2px solid var(--signal); border-radius: 8px; padding: .9rem 1.2rem;
+  }
+  .safe-strip svg { flex: none; color: var(--signal); }
+  .safe-strip b { color: var(--text); }
+
+  /* &#9472;&#9472; outcomes &#9472;&#9472; */
+  .outcomes { display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(2rem,4vw,3.5rem); align-items: center; }
+  .rate-panel {
+    background: radial-gradient(120% 120% at 30% 0%, rgba(51,214,160,.10), transparent 60%), var(--surface);
+    border: 1px solid var(--line-2); border-radius: 16px; padding: 2.2rem;
+    text-align: center;
+  }
+  .rate-num { font-family: var(--mono); font-size: clamp(3.2rem,7vw,4.6rem); line-height: 1; color: var(--signal); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .rate-num .pct { font-size: .5em; color: var(--signal-lo); margin-left: .1em; }
+  .rate-label { font-family: var(--mono); font-size: .74rem; letter-spacing: .2em; text-transform: uppercase; color: var(--text-dim); margin-top: 1rem; }
+  .rate-bar { height: 7px; border-radius: 4px; background: #16211d; overflow: hidden; margin-top: 1.6rem; border: 1px solid var(--line); }
+  .rate-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--signal-lo), var(--signal)); border-radius: 4px; transition: width 1.4s cubic-bezier(.2,.7,.2,1); }
+  .rate-sub { font-family: var(--mono); font-size: .68rem; color: var(--text-faint); margin-top: .9rem; }
+  .outcome-list { display: flex; flex-direction: column; gap: 1.4rem; }
+  .outcome { display: flex; gap: 1rem; }
+  .outcome .tick { flex: none; color: var(--signal); margin-top: 2px; }
+  .outcome h3 { font-size: 1.02rem; margin-bottom: .3rem; }
+  .outcome p { font-size: .95rem; }
+
+  /* &#9472;&#9472; use cases &#9472;&#9472; */
+  .uc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.1rem; margin-top: 3rem; }
+  .uc {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 1.6rem 1.5rem; transition: border-color .25s ease, transform .25s ease, background .25s ease;
+  }
+  .uc:hover { border-color: var(--line-2); transform: translateY(-3px); background: var(--surface-2); }
+  .uc .ic { color: var(--signal); margin-bottom: 1.1rem; display: block; }
+  .uc h3 { margin-bottom: .5rem; font-size: 1.04rem; }
+  .uc p { font-size: .92rem; }
+
+  /* &#9472;&#9472; proof &#9472;&#9472; */
+  .proof { background: linear-gradient(180deg, var(--bg-2), var(--bg)); }
+  .proof-card {
+    background: var(--surface); border: 1px solid var(--line-2); border-radius: 16px;
+    overflow: hidden; margin-top: 3rem;
+  }
+  .proof-top { padding: 1.1rem 1.6rem; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .6rem; }
+  .proof-top .name { font-family: var(--mono); font-size: .82rem; color: var(--text); letter-spacing: .04em; }
+  .proof-top .name b { color: var(--signal); font-weight: 600; }
+  .proof-top .tag { font-family: var(--mono); font-size: .68rem; color: var(--text-dim); letter-spacing: .1em; text-transform: uppercase; }
+  .proof-stats { display: grid; grid-template-columns: repeat(5,1fr); }
+  .pstat { padding: 1.9rem 1.4rem; border-right: 1px solid var(--line); text-align: left; }
+  .pstat:last-child { border-right: none; }
+  .pstat .n { font-family: var(--mono); font-size: 1.9rem; color: var(--text); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .pstat .n .u { color: var(--signal); font-size: .55em; }
+  .pstat .l { font-family: var(--mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim); margin-top: .5rem; }
+  .proof-foot { padding: 1.1rem 1.6rem; border-top: 1px solid var(--line); font-family: var(--mono); font-size: .72rem; color: var(--text-faint); letter-spacing: .03em; }
+  .proof-foot span { color: var(--text-dim); }
+
+  /* &#9472;&#9472; why &#9472;&#9472; */
+  .why-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-top: 3rem; }
+  .why { background: var(--bg-2); padding: 2rem 1.9rem; display: flex; gap: 1.1rem; }
+  .why .ic { color: var(--signal); flex: none; margin-top: 3px; }
+  .why h3 { margin-bottom: .5rem; }
+  .why p { font-size: .96rem; }
+
+  /* &#9472;&#9472; pull quote &#9472;&#9472; */
+  .pull { text-align: center; }
+  .pullquote {
+    font-size: clamp(1.6rem, 3.6vw, 2.6rem);
+    line-height: 1.22; letter-spacing: -.02em; color: var(--text-dim);
+    max-width: 24ch; margin: 0 auto; font-weight: 500; text-wrap: balance;
+  }
+  .pullquote strong { color: var(--signal); font-weight: 600; }
+
+  /* &#9472;&#9472; close &#9472;&#9472; */
+  .close { text-align: center; border-top: 1px solid var(--line); }
+  .close h2 { max-width: 20ch; margin: 0 auto 1.3rem; }
+  .close .lead { margin: 0 auto; text-align: center; max-width: 48ch; }
+  .close .hero-cta { justify-content: center; margin-top: 2.6rem; }
+  .btn {
+    font-family: var(--mono); font-size: .82rem; letter-spacing: .06em;
+    color: var(--bg); background: var(--signal); border: none;
+    padding: .85rem 1.6rem; border-radius: 8px; text-decoration: none;
+    display: inline-flex; align-items: center; gap: .6rem; font-weight: 600;
+    transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+    box-shadow: 0 0 0 1px transparent, 0 12px 30px -12px var(--signal-glow);
+  }
+  .btn:hover { background: var(--signal-hi); transform: translateY(-1px); }
+  .btn svg { stroke: var(--bg); }
+  .btn.ghost { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2); }
+  .btn.ghost:hover { box-shadow: inset 0 0 0 1px var(--signal); color: var(--signal); }
+  .btn.ghost svg { stroke: currentColor; }
+
+  footer.foot {
+    border-top: 1px solid var(--line); padding: 2.5rem 0;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+  }
+  footer.foot .brandname { font-size: .74rem; }
+  footer.foot p { font-family: var(--mono); font-size: .68rem; color: var(--text-faint); letter-spacing: .04em; }
+
+  a:focus-visible, .btn:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; border-radius: 6px; }
+
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .pain-grid, .steps, .uc-grid, .outcomes, .why-grid { grid-template-columns: 1fr; }
+    .proof-stats { grid-template-columns: repeat(2,1fr); }
+    .pstat { border-bottom: 1px solid var(--line); }
+    .matrix { grid-template-columns: repeat(14, 1fr); }
+  }
+  @media (max-width: 520px) {
+    .proof-stats { grid-template-columns: 1fr 1fr; }
+    section { padding: 4rem 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cell { transition: none; opacity: 1; transform: none; }
+    .rate-fill { transition: none; }
+    * { scroll-behavior: auto; }
+  }
+</style>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="brandline">
+      <img class="brandmark" src="data:image/png;base64,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" alt="Erebus">
+      <span class="brandname">ERE<b>BUS</b></span>
+    </div>
+
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Detection Validation Platform</span>
+        <h1>Would you <span class="q">catch it?</span></h1>
+        <p class="lead">
+          You've invested millions in your SIEM, your EDR, and your detection content.
+          Erebus proves, safely and in minutes, whether any of it would actually fire
+          when a real adversary moves through your environment.
+        </p>
+        <div class="hero-cta">
+          <div class="stat-inline"><span class="n mono">Assumed</span><span class="l">is not proven</span></div>
+          <span class="divider-dot"></span>
+          <div class="stat-inline"><span class="n mono">0</span><span class="l">endpoints touched</span></div>
+        </div>
+      </div>
+
+      <div class="matrix-card" aria-hidden="true">
+        <div class="matrix-head">
+          <span class="t">ATT&amp;CK coverage</span>
+          <span class="rate mono" id="mrate">&#183;&#183;&#183;</span>
+        </div>
+        <div class="matrix" id="matrix"></div>
+        <div class="matrix-legend">
+          <span class="lg"><span class="swatch sw-on"></span>Detection fired</span>
+          <span class="lg"><span class="swatch sw-gap"></span>Blind spot</span>
+        </div>
+        <div class="matrix-note">Illustrative coverage model. Real technique grid rendered per run.</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- PAIN -->
+  <section>
+    <div class="section-head">
+      <div class="kicker"><span class="idx">01</span> The problem</div>
+      <h2>Coverage is assumed. It is almost never proven.</h2>
+      <p>Every security program runs on a comfortable assumption: the detections are working. That assumption holds right up until the one moment it needs to be true.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-cell">
+        <h3><span class="mk">//</span>A broken detection is invisible</h3>
+        <p>A rule that silently stopped matching looks exactly like a quiet network. There is no alert for the alert that never fired.</p>
+      </div>
+      <div class="pain-cell">
+        <h3><span class="mk">//</span>Coverage drifts the day you deploy</h3>
+        <p>Log sources change, fields rename, a SIEM upgrade ships, someone edits a rule. Coverage decays continuously, and no one is watching the decay.</p>
+      </div>
+      <div class="pain-cell">
+        <h3><span class="mk">//</span>Red teams are a snapshot</h3>
+        <p>Point-in-time, narrow, and expensive, then stale the moment a rule changes. You can't run one every time an engineer merges a detection.</p>
+      </div>
+      <div class="pain-cell">
+        <h3><span class="mk">//</span>You find the gap in the post-mortem</h3>
+        <p>The blind spot gets discovered during the incident review, when the adversary has already used it. That is the most expensive possible time to learn it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION -->
+  <section>
+    <div class="section-head">
+      <div class="kicker"><span class="idx">02</span> The platform</div>
+      <h2>Erebus turns assumed coverage into proven coverage.</h2>
+      <p>Erebus generates realistic, threat-intelligence-grounded attack telemetry across every source your SIEM ingests (endpoint, EDR, identity, cloud, network) and injects it directly into the SIEM you already run. Your real detections either fire, or they don't. You see exactly which.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <h3>Choose a grounded campaign</h3>
+        <p>Pick a real adversary playbook, such as Scattered Spider, IcedID or ransomware operators, modeled from CISA, Mandiant and Microsoft reporting, mapped to MITRE ATT&amp;CK.</p>
+      </div>
+      <div class="step">
+        <h3>Inject into your SIEM</h3>
+        <p>A full multi-source intrusion lands in minutes, dated to now, at raw-event fidelity, indistinguishable from production telemetry to your detections.</p>
+      </div>
+      <div class="step">
+        <h3>Measure what fired</h3>
+        <p>Watch detections trigger across the kill chain, and see precisely where the campaign moved without raising a single alert.</p>
+      </div>
+    </div>
+    <div class="safe-strip">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
+      <span><b>Safe by construction.</b> No malware. No exploitation. Nothing executes on an endpoint. Erebus injects telemetry, never the attack itself.</span>
+    </div>
+  </section>
+
+  <!-- OUTCOMES -->
+  <section>
+    <div class="outcomes">
+      <div class="rate-panel">
+        <div class="rate-num mono"><span id="ratecount">0</span><span class="pct">%</span></div>
+        <div class="rate-label">Detection Rate</div>
+        <div class="rate-bar"><span class="rate-fill" id="ratefill"></span></div>
+        <div class="rate-sub">Illustrative. The one figure your board keeps asking for, trending over time.</div>
+      </div>
+      <div>
+        <div class="kicker"><span class="idx">03</span> The outcome</div>
+        <h2 style="margin-bottom:1.8rem;">From "we think we're covered" to evidence.</h2>
+        <div class="outcome-list">
+          <div class="outcome">
+            <svg class="tick" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <div><h3>Quantify real coverage</h3><p>A measurable Detection Rate across the techniques that matter to your business, not a vendor's assertion.</p></div>
+          </div>
+          <div class="outcome">
+            <svg class="tick" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <div><h3>Close gaps before an adversary finds them</h3><p>Surface the silent blind spots proactively, and prove they're closed once the fix ships.</p></div>
+          </div>
+          <div class="outcome">
+            <svg class="tick" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <div><h3>Validate every change</h3><p>Test new detections before they go live and catch regressions the moment a rule, field, or platform shifts.</p></div>
+          </div>
+          <div class="outcome">
+            <svg class="tick" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            <div><h3>Justify the spend</h3><p>Prove the tooling you own is earning its keep, or back the next investment with hard evidence instead of fear.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USE CASES -->
+  <section>
+    <div class="section-head">
+      <div class="kicker"><span class="idx">04</span> Where it fits</div>
+      <h2>One capability, across the security program.</h2>
+    </div>
+    <div class="uc-grid">
+      <div class="uc">
+        <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/><path d="m9 12 2 2 4-4"/></svg>
+        <h3>Continuous detection validation</h3>
+        <p>Know your real coverage on a schedule, not once a year. Assumed becomes proven, and stays proven.</p>
+      </div>
+      <div class="uc">
+        <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/><path d="m9 12 2 2 4-4"/></svg>
+        <h3>Detection engineering &amp; regression</h3>
+        <p>Gate every rule change in CI/CD. A merge that breaks coverage fails the build, before it reaches production.</p>
+      </div>
+      <div class="uc">
+        <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2M4 7h16M4 7v10a2 2 0 0 0 2 2h5M20 7v4"/><path d="m15 19 2 2 4-4"/></svg>
+        <h3>SIEM &amp; EDR migration</h3>
+        <p>Prove coverage survives the move. Replay the same campaigns against the new platform and compare, side by side.</p>
+      </div>
+      <div class="uc">
+        <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="M3 8v6l9 5 9-5V8"/></svg>
+        <h3>SOC analyst training</h3>
+        <p>Realistic, grounded incidents your team investigates end to end. The real data, none of the real risk.</p>
+      </div>
+      <div class="uc">
+        <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>
+        <h3>Purple team enablement</h3>
+        <p>Repeatable adversary emulation without a red-team calendar. Run the campaign, measure the response, iterate.</p>
+      </div>
+      <div class="uc">
+        <svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>
+        <h3>Vendor &amp; POV evaluation</h3>
+        <p>Test a detection product on <em>your</em> telemetry before you sign. Buy on evidence, not on a scripted demo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROOF -->
+  <section class="proof">
+    <div class="section-head">
+      <div class="kicker"><span class="idx">05</span> Proof</div>
+      <h2>One intrusion. Every telemetry source. Minutes.</h2>
+      <p>A synthetic Scattered Spider (UNC3944) financial-services intrusion, generated by Erebus and shipped into Splunk. The full kill chain from help-desk vishing to DragonForce ransomware, corroborated across twelve telemetry sources. Hit Run and the whole 48-minute campaign lands at once, back-dated so the final event is the moment you ran it. It is sitting there waiting in your default time window.</p>
+    </div>
+    <div class="proof-card">
+      <div class="proof-top">
+        <span class="name mono">scattered_spider_finserv_intrusion &nbsp;<b>&#183; shipped to Splunk</b></span>
+        <span class="tag">Grounded &#183; CISA AA23-320A &#183; Mandiant &#183; Microsoft</span>
+      </div>
+      <div class="proof-stats">
+        <div class="pstat"><div class="n mono">1,334</div><div class="l">Events</div></div>
+        <div class="pstat"><div class="n mono">12<span class="u"> /src</span></div><div class="l">Telemetry sources</div></div>
+        <div class="pstat"><div class="n mono">248</div><div class="l">Hosts in the fan-out</div></div>
+        <div class="pstat"><div class="n mono">23</div><div class="l">ATT&amp;CK techniques</div></div>
+        <div class="pstat"><div class="n mono">~48<span class="u"> min</span></div><div class="l">Campaign, ends at Run</div></div>
+      </div>
+      <div class="proof-foot mono"><span>Sources:</span> Sysmon &#183; Windows Security &#183; Windows Security Audit &#183; Windows Security Extra &#183; Windows TerminalServices &#183; CrowdStrike &#183; osquery &#183; Zeek Files &#183; Zeek Conn &#183; Entra ID &#183; PAN-OS &#183; CloudTrail &nbsp;&#183;&nbsp; <span>no malware, fully repeatable.</span></div>
+    </div>
+  </section>
+
+  <!-- WHY -->
+  <section>
+    <div class="section-head">
+      <div class="kicker"><span class="idx">06</span> Why Erebus</div>
+      <h2>Realistic enough to test what you actually run.</h2>
+    </div>
+    <div class="why-grid">
+      <div class="why">
+        <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+        <div><h3>Safe by design</h3><p>Telemetry injection, never live malware or exploitation. Run it against production detections without production risk.</p></div>
+      </div>
+      <div class="why">
+        <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-6"/></svg>
+        <div><h3>Grounded &amp; multi-source</h3><p>Real campaigns rendered at raw-event fidelity across endpoint, EDR, identity, cloud and network, so the detections you actually run are the ones being tested.</p></div>
+      </div>
+      <div class="why">
+        <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg>
+        <div><h3>Fast &amp; repeatable</h3><p>Deploys in fifteen minutes. A full campaign runs in minutes, always dated to now. Every deploy, every sprint, every audit, not a once-a-year engagement.</p></div>
+      </div>
+      <div class="why">
+        <svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+        <div><h3>Yours, self-hosted</h3><p>Runs in your environment and your telemetry never leaves. Works with the SIEM and detections you already own (Splunk, Elastic, more), not a cloud-only walled garden.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PULL QUOTE -->
+  <section class="pull">
+    <p class="pullquote">The security stack is already paid for. <strong>Erebus proves it actually works.</strong></p>
+  </section>
+
+  <!-- CLOSE -->
+  <section class="close">
+    <div class="kicker" style="justify-content:center;"><span class="idx">&#8594;</span> The next step</div>
+    <h2>Stop assuming. Start proving.</h2>
+    <p class="lead">See Erebus run a grounded campaign against your own detections, and get the one number your board keeps asking for.</p>
+    <div class="hero-cta">
+      <a class="btn" href="./#request">Request a walkthrough
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span class="brandname">ERE<b>BUS</b></span>
+    <p>The budget is already spent. Erebus proves the investment works.</p>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // &#9472;&#9472; coverage matrix &#9472;&#9472;
+    var COLS = 14, ROWS = 6, TOTAL = COLS * ROWS;
+    var m = document.getElementById('matrix');
+    // deterministic coverage pattern: blind spots scattered across tactics
+    // (every gap sits in a distinct column so no single tactic reads as "all gap")
+    var gaps = {}, gapCells = [2,11,19,27,29,36,46,54,62,66,73,79];
+    gapCells.forEach(function (i) { gaps[i] = true; });
+    var flagCells = { 11:1, 36:1, 54:1, 79:1 };
+    var cells = [];
+    var covered = 0, flagged = 0;
+    for (var i = 0; i < TOTAL; i++) {
+      var c = document.createElement('div');
+      c.className = 'cell';
+      if (gaps[i]) {
+        c.className += ' gap';
+        if (flagCells[i]) { c.className += ' flag'; flagged++; }
+      } else if ((i * 7 + 3) % 11 < 2) {
+        c.className += ' mid'; covered++;
+      } else {
+        c.className += ' on'; covered++;
+      }
+      cells.push(c);
+      m.appendChild(c);
+    }
+    var rate = Math.round((covered / TOTAL) * 100);
+    var rateEl = document.getElementById('mrate');
+
+    function reveal() {
+      cells.forEach(function (c, idx) {
+        if (reduce) { c.classList.add('show'); return; }
+        setTimeout(function () { c.classList.add('show'); }, 260 + idx * 11);
+      });
+      if (rateEl) rateEl.textContent = rate + '% detected';
+    }
+
+    // &#9472;&#9472; detection-rate count-up + bar &#9472;&#9472;
+    var target = 92; // illustrative program Detection Rate
+    var countEl = document.getElementById('ratecount');
+    var fillEl = document.getElementById('ratefill');
+    function runRate() {
+      if (fillEl) fillEl.style.width = target + '%';
+      if (!countEl) return;
+      if (reduce) { countEl.textContent = target; return; }
+      var start = null, dur = 1300;
+      function tick(ts) {
+        if (!start) start = ts;
+        var p = Math.min((ts - start) / dur, 1);
+        var eased = 1 - Math.pow(1 - p, 3);
+        countEl.textContent = Math.round(eased * target);
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // fire matrix on load; fire rate panel when scrolled into view
+    if (document.readyState !== 'loading') reveal();
+    else document.addEventListener('DOMContentLoaded', reveal);
+
+    var rp = document.querySelector('.rate-panel');
+    if (rp && 'IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { runRate(); io.disconnect(); }
+        });
+      }, { threshold: .4 });
+      io.observe(rp);
+    } else { runRate(); }
+  })();
+</script>

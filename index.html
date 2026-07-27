@@ -217,6 +217,21 @@
   .done p { margin: 0; color: var(--text-dim); font-size: .95rem; line-height: 1.6; }
 
   /* ── secondary / footer ── */
+  .more {
+    margin: 1.6rem 0 0;
+    text-align: center;
+    font-size: .9rem;
+    color: var(--text-faint);
+  }
+  .more a {
+    color: var(--text-dim);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line-2);
+    padding-bottom: 1px;
+    transition: color .18s ease, border-color .18s ease;
+  }
+  .more a:hover { color: var(--signal); border-color: var(--signal); }
+
   .alt {
     margin-top: 2.2rem;
     display: flex; align-items: center; gap: 1rem;
@@ -279,7 +294,7 @@
     attack campaign against your own detections. Safely, on repeat, in minutes.
   </p>
 
-  <div class="card">
+  <div class="card" id="request">
 
     <form id="demoform" action="https://formspree.io/f/xojgyqjn" method="POST">
       <input type="hidden" name="_subject" value="Erebus demo request">
@@ -343,6 +358,10 @@
     </div>
 
   </div>
+
+  <p class="more">
+    Want the longer version first? <a href="overview.html">See how Erebus works</a>.
+  </p>
 
   <div class="alt-wrap">
     <div class="alt">or</div>
